@@ -1,0 +1,267 @@
+How can processes help you?
+How to work with Processes?
+How to ensure that data does not get corrupted?
+How to communicate between Processes?
+How to Parallelize work using Processes?
+
+We all like fast things. A faster boat, bike, car. How about a faster script?
+How do we make our ruby code run faster?
+
+One method is to parallelize parts of the script. We can have several things within 
+the script execute at the same time instead of sequentially. We can use
+Processes to achieve this.
+
+First thing about Processes is that processes are not ruby concepts. They are
+OS concepts. It's the OS that provides us this thing called a Process. Ruby's
+Process methods just use what is provided by the OS underneath. This is the
+first thing the rubydocs about Process tells you:
+https://ruby-doc.org/3.2.2/Process.html
+
+Let's take a problem of calculating fibonacci sequences for n and n + 1 (where
+n is 40). Our code is:
+
+```
+$n = 40
+
+def fibo(n)
+  if n < 2
+    1
+  else
+    fibo(n-2) + fibo(n-1)
+  end
+end
+
+
+n_result = fibo($n)
+n_plus_one_result = fibo($n + 1)
+
+p n_result + n_plus_one_result
+=> 433494437
+```
+
+We are calculating fibonacci number at 40 and 41 place. Then calculating their
+sum. This program takes 25 seconds in my dual core computer to finish.
+
+```
+ 25.733370   0.000000  25.733370 ( 25.735631)
+```
+
+The above scripts runs this way:
+1. calculate fibonnaci for 40th place
+2. calculate fibonnaci for 41st place
+3. Sum the results
+
+We can make this faster by executing the 1st and 2nd points above at the
+same time.
+
+So we need to rewrite our script to:
+1. Calculate fibonnaci for 40th place and 41st place.
+2. Sum the results
+
+In code, this is:
+
+```
+n_result = 0
+n_plus_one_result = 0
+
+fork { n_result = fibo($n) } # process(1)
+fork { n_plus_one_result = fibo($n + 1) } # process(2)
+
+2.times do
+  Process.wait
+end
+
+p n_result + n_plus_one_result
+=> 0
+```
+
+There are a two new things in the above script. They are:
+1. fork
+2. Process.wait
+
+fork() creates a new (child)process.
+Process.wait() waits for the child process to exit.
+We call Process.wait two times because we have two processes
+that we need to wait on.
+
+This script contains three processes.
+Process(0) is the parent process which `forks` two times.
+Each fork creates a new process.
+Thus, we have one parent process and two child processes.
+
+Inside each child process we calculate the fibo for n and n + 1 respectively then 
+store the result in it's corresponding variable. So that when we add n_result
+and n_plus_one_result we get our final value.
+
+This script takes 16s to execute, so we have reduced our total time.
+
+```
+  0.000000   0.003370  26.134027 ( 16.082322)
+```
+
+However our final result is 0. Why?
+
+The reason is because processes have isolated environments. This means every
+variable defined in that script is duplicated in each process and is 'local'
+to that process (even global variables are localized, so $n in process(0) is
+different from $n in process(1)). When process(1)
+computes fibo(n) and writes to n_result, it's not writing to the n_result
+variable defined in process(0) environment. It's writing the result to the
+n_result variable defined inside process(1) environment. Same with fibo(n + 1),
+process(2) is writing that result to the n_plus_one_result variable defined
+within it's environment. Thus the two variables in process(0) stay the same.
+Their values are still 0.
+
+This is a feature of processes and this is what makes working with them
+simpler (when compared to threads). Because processes donot have shared state you
+do not have to worry about race conditions and deadlocks. Race conditions are
+when two threads are reading/writing to the same variable and deadlocks are when two
+threads reach a state where it's impossible for them to resolve the situation
+and thus get stuck on an infinite loop.
+
+However the downside of this simplicity is duplication. Duplication means that
+processes take up more memory space. Our script does not use up a lot
+of space because all it has are two variables and one method. Imagine a script
+with hundreds of methods and variables (a Rails app). For such a script the
+duplication might mean that the script consumes 500MB of memory for each
+separate process. Thus if our script was big enough, we would be consuming
+1.5G of memory.
+
+To return to our problem, we have reduced the total time taken by our program.
+However, because the calculations are done in separate processes the result is
+only available within those processes.
+We need a way to communicate with process(0) once the calculation is finished
+and then add the results.
+How do we do that?
+
+Passing Messages Between Process
+
+Pipes are a unidirectional communication channel that we can leverage to pass
+messages between processes. Unidirectional means that messages can be passed
+only in one direction. So, only the sender can send messages and the receiver
+can only receive them.
+
+Once again this is provided by the OS. See pipe(2)
+
+```
+    rd, wr = IO.pipe
+
+    [$n, $n + 1].each do |i|
+      fork do
+        rd.close
+        result = fibo(i)
+        wr.puts result
+        wr.close
+      end
+    end
+
+    wr.close
+
+    2.times do
+      Process.wait
+    end
+
+    result = rd.read.split("\n").map(&:to_i).sum
+    p result
+    =>
+```
+
+We create a pipe and the parent process gets the reader end while we hand the
+writer ends to the child processes. The child processes calculate the result
+and then send it over the pipe to the parent.
+Finally we calculate the sum in the parent process.
+
+With pipes you stream messages. To stream means that there's no way to tell
+where individual messages end. In our example above if we didn't use wr.puts
+to send our messages into the pipe, when reading the message the message would
+look like "<result 1><result 2>" As both of these are numbers, how do we tell
+where one numbers ends and the other begins?
+
+This is why we use puts to send the message. Puts inserts a "\n" after each
+message which we are using as a delimiter for each message.
+
+A multidirectional channel of communication between processes are UNIX sockets.
+UNIX sockets donot transmit messages as a single stream. Each message is an
+individual unit.
+
+Our program is done. We have managed to reduce the time taken by 10s and we
+display the correct result. 
+However using pipes and UNIX sockets to communicate introduces a level
+of misdirection which can be avoided by using
+Ractors[https://ruby-doc.org/3.2.2/Ractor.html].
+Each ractor has it's own environment and any shareable data between ractors are protected using a
+locking mechanism. For our program, ractors enable picking out their data easily by the
+main Ractor (the parent process). This is the code when using ractors:
+
+```
+    ractors = []
+    2.times do
+      ractors << Ractor.new do
+        i = receive # receives blocks till somebody passes a message
+        fibo(i)
+      end
+    end
+
+    0.upto(1) { |i| ractors[i].send($n + i) }
+    result = ractors.map(&:take)
+
+    p result.sum
+```
+
+As you can see we do not have to use pipes or sockets to communicate between
+ractors. Ractors donot have access to variables that are declared outside
+which is why we use `ractors[i].send(..)` to send them values.
+
+Ruby also provides other mechanisms such as Threads and Fibers for
+concurrency. I will explore them in a separate article.
+
+
+----
+
+What happens when the child processes write to the pipe at the same time?
+If two child processes can not write to the pipe at the same time, how is that
+implemented?
+
+What happens when multiple processes are sharing a single pipe?
+=> a pipe is generated and the parent process is the reader. Both of the child
+processes need to write to the pipe. How will this play out?
+
+
+Working with Processess is easy:
+- You spawn processes using fork
+- You wait for processes to complete using Process.wait
+- Process.wait is blocking i.e your script waits until the child process
+completes it work before moving on
+- This removes the advantages of forking because the script is not concurrent
+  now.
+- To fix this we use UNIX signals. We trap a signal (:CHINT) so that our
+  parent process is notified when one of the children has finished and exited.
+- When we need to communicate between processes we can use Unix pipes. Pipes
+  are unidirectional which means if one process becomes the sender the other
+  has to become the receiver.
+- To communicate bidirectionally use UNIX Sockets.
+
+Data is not corrupted when using Processes because processes copy over any
+global data when it gets modified.
+
+Use pipes or UNIX sockets.
+
+In a multicore cpu, in viable conditions, the processes are parallelized by
+the OS.
+
+# all times
+433494437
+***************************
+Time taken without processes or ractors: 
+ 25.733370   0.000000  25.733370 ( 25.735631)
+***************************
+433494437
+***************************
+Time taken with processes: 
+  0.000000   0.003370  26.134027 ( 16.082322)
+***************************
+process.rb:67: warning: Ractor is experimental, and the behavior may change in future versions of Ruby! Also there are many implementation issues.
+433494437
+***************************
+Time taken with ractors: 
+ 26.018751   0.000522  26.019273 ( 16.038329)
