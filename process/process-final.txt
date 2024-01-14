@@ -1,6 +1,6 @@
 # Use Processes to speed up your program
 
-Do you like fast things? A fast boat, bike, car. How about a fast script?
+Do you like fast things? A fast boat, bike, car? How about a fast script?
 
 How do we make our ruby code run faster?
 
@@ -35,7 +35,7 @@ p n_result + n_plus_one_result
 
 We are calculating fibonacci number at 40 and 41 place. Inserting the values
 into the `fibos` array. Then calculating their
-sum. This program takes 25 seconds in my dual core computer to finish.
+sum. This program takes 26 seconds in my dual core computer to finish.
 
 ```
   26.611368   0.000000  26.611368 ( 26.614200)
@@ -151,7 +151,7 @@ processes so that we can sum it.
 
 How do we do that?
 
-## Passing Messages Between Process
+## Passing Messages Between Processes
 
 Pipes are a unidirectional communication channel that we can leverage to pass
 messages between processes. Unidirectional means that messages can be passed
@@ -258,5 +258,6 @@ As you can see with ractors we do not have to use pipes or sockets to
 communicate. 
 
 Processes are not the only mechanisms that enable paralellism and concurrency
-in ruby. Another popular concurrency mechanism are Threads. Ruby also provides a
-Fiber mechanism for concurrency.
+in ruby. Another popular concurrency mechanism are
+[Threads](https://ruby-doc.org/3.2.2/Thread.html). Ruby also provides a
+[Fiber](https://ruby-doc.org/3.2.2/Fiber.html) mechanism for concurrency.

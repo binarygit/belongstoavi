@@ -20,7 +20,7 @@ body {
   <div class="container">
     <h1 id="use-processes-to-speed-up-your-program">Use Processes to speed
 up your program</h1>
-<p>Do you like fast things? A fast boat, bike, car. How about a fast
+<p>Do you like fast things? A fast boat, bike, car? How about a fast
 script?</p>
 <p>How do we make our ruby code run faster?</p>
 <p>One method is to parallelize parts of the script. We can have several
@@ -50,7 +50,7 @@ class="sourceCode ruby"><code class="sourceCode ruby"><span id="cb1-1"><a href="
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="kw">=&gt;</span> <span class="dv">433494437</span></span></code></pre></div>
 <p>We are calculating fibonacci number at 40 and 41 place. Inserting the
 values into the <code>fibos</code> array. Then calculating their sum.
-This program takes 25 seconds in my dual core computer to finish.</p>
+This program takes 26 seconds in my dual core computer to finish.</p>
 <pre><code>  26.611368   0.000000  26.611368 ( 26.614200)</code></pre>
 <p>The above scripts runs this way:</p>
 <ol type="1">
@@ -149,8 +149,8 @@ which is why when we sum we get 0.</p>
 calculating the correct values. However we need a way to communicate the
 results between processes so that we can sum it.</p>
 <p>How do we do that?</p>
-<h2 id="passing-messages-between-process">Passing Messages Between
-Process</h2>
+<h2 id="passing-messages-between-processes">Passing Messages Between
+Processes</h2>
 <p>Pipes are a unidirectional communication channel that we can leverage
 to pass messages between processes. Unidirectional means that messages
 can be passed only in one direction. So, only the sender can send
@@ -240,8 +240,10 @@ fibo(41).</p>
 <p>As you can see with ractors we do not have to use pipes or sockets to
 communicate.</p>
 <p>Processes are not the only mechanisms that enable paralellism and
-concurrency in ruby. Another popular concurrency mechanism are Threads.
-Ruby also provides a Fiber mechanism for concurrency.</p>
+concurrency in ruby. Another popular concurrency mechanism are <a
+href="https://ruby-doc.org/3.2.2/Thread.html">Threads</a>. Ruby also
+provides a <a href="https://ruby-doc.org/3.2.2/Fiber.html">Fiber</a>
+mechanism for concurrency.</p>
   </div>
 </body>
 </html>
