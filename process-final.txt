@@ -1,10 +1,3 @@
-How can processes help you?
-How to work with Processes?
-How to ensure that data does not get corrupted?
-How to communicate between Processes?
-How to Parallelize work using Processes?
-
-
 # Use Processes to speed up your program
 
 Do you like fast things? A fast boat, bike, car. How about a fast script?
@@ -14,12 +7,6 @@ How do we make our ruby code run faster?
 One method is to parallelize parts of the script. We can have several things within 
 the script execute at the same time instead of sequentially. We can use
 Processes to achieve this.
-
-First thing about Processes is that they are not ruby concepts. They are
-OS concepts. It's the OS that provides us this thing called a Process. Ruby's
-Process methods just use what is provided by the OS underneath. This is the
-first thing the rubydocs about Process tells you:
-https://ruby-doc.org/3.2.2/Process.html
 
 Let's take a problem of calculating fibonacci sequences for n and n + 1 (where
 n is 40). Our code is:
@@ -68,9 +55,8 @@ fibos array.
 2. Sum the results
 
 Translated to code this is:
-In code, this is:
 
-```
+```ruby
 fibos = []
 
 fork { fibos << fibo($n) } # process(1)
@@ -100,7 +86,8 @@ Thus, we have one parent process and two child processes.
 
 Inside each child process we calculate the fibo for n and n + 1 respectively then 
 push it into the fibos array. We then  sum the values.
-This script takes 18s to execute, so we have reduced our total time.
+
+This script takes 18s to execute, so we have already reduced our total time.
 
 ```
   0.000000   0.003849  31.207346 ( 18.875722)
@@ -108,25 +95,25 @@ This script takes 18s to execute, so we have reduced our total time.
 
 However our final result is 0. Why?
 
-Let me remind you first that we are in a parallel world here, and in a
+Let me remind you first that we are in a parallel world here and in a
 parallel world weird things can happen when different processes are writing to
 a variable simultaneously.
 
 This becomes a critical point to keep in mind when looking at these lines of code:
 
-```
- fibos << fibo($n)
- fibos << fibo($n + 1)
+```ruby
+fibos << fibo($n)
+fibos << fibo($n + 1)
 ```
 
-What is the final value of fibos when fibo($n) and fibo($n + 1) finish 
+What is the final value of fibos when `fibo($n)` and `fibo($n + 1)` finish 
 calculating at the same time?
 
 When that happens fibos final value can either be `result 1` or `result 2`.
 
-This scenario is completely possible. Think about it, fibo($n) finishes
-calculating (fibos value is []), simultaneously fibo($n + 1) finishes calculating
-(fibos value is []). Both push.
+This scenario is completely possible. Think about it, `fibo($n)` finishes
+calculating  <span>(fibos value is [])</span>, simultaneously `fibo($n + 1)` finishes calculating
+<span>(fibos value is [])</span>. Both push.
 
 This is an ugly situation and if this was the way processes actually worked we
 could have four different outcomes for fibos:
@@ -136,9 +123,10 @@ could have four different outcomes for fibos:
 3. [`result 1`]  <span>When both complete at same time, and process(1) pushes last to fibos</span>
 4. [`result 2`]  <span>When both complete at same time, and process(2) pushes last to fibos</span>
 
-But instead of this we have a fibos value of [] because in reality none of the above
-scenarios come into play when using processes. However I hope you appreciate 
-the problems that arise when you want to share variables
+But instead of this we have a fibos value of [] (an empty array) because in reality none of the above
+scenarios come into play when using processes. 
+
+However I hope you appreciate the problems that arise when you want to share variables
 between parallel programs because when using other methods (like Threads) to
 parallelize the above scenarios do come into play.
 
@@ -157,7 +145,9 @@ they are writing to their localized copies.
 The original fibos array (in process(0)) is unchanged (value []) which is why
 when we sum we get 0.
 
-Now we need a way to communicate the results between processes. 
+To summarize, our program has been parallelized. Each process is calculating
+the correct values. However we need a way to communicate the results between
+processes so that we can sum it.
 
 How do we do that?
 
@@ -168,31 +158,31 @@ messages between processes. Unidirectional means that messages can be passed
 only in one direction. So, only the sender can send messages and the receiver
 can only receive them.
 
-```
-    fibos = []
-    rd, wr = IO.pipe # instantiate a pipe
+```ruby
+fibos = []
+rd, wr = IO.pipe # instantiate a pipe
 
-    [$n, $n + 1].each do |i|
-      fork do
-        rd.close # writer needs to close it's reader.
-        result = fibo(i)
-        wr.puts result
-        wr.close
-      end
-    end
+[$n, $n + 1].each do |i|
+  fork do
+    rd.close # writer needs to close it's reader.
+    result = fibo(i)
+    wr.puts result
+    wr.close
+  end
+end
 
-    wr.close # reader needs to close it's writer.
+wr.close # reader needs to close it's writer.
 
-    2.times do
-      Process.wait
-    end
+2.times do
+  Process.wait
+end
 
-    rd.read.split("\n").each do |res|
-      fibos << res.to_i
-    end
+rd.read.split("\n").each do |res|
+  fibos << res.to_i
+end
 
-    p result
-    => 433494437
+p result
+=> 433494437
 ```
 
 Time taken:
@@ -207,7 +197,7 @@ Finally we calculate the sum in the parent process.
 
 Another way to communicate between processes is to use UNIX sockets.
 
-Our program is done. We have managed to reduce the time taken by 10s and we
+Our program is done. We have managed to reduce the time taken by 8s and we
 display the correct result. 
 
 However using pipes or UNIX sockets to communicate introduces a level
@@ -218,25 +208,25 @@ Each ractor has it's own environment and any shareable data between ractors are 
 locking mechanism. For our program, ractors enable picking out their data easily by the
 main Ractor (the parent process). This is the code when using ractors:
 
-```
-    fibos = []
-    ractors = []
+```ruby
+fibos = []
+ractors = []
 
-    2.times do
-      ractors << Ractor.new do
-        num = receive
-        fibo(num)
-      end
-    end
+2.times do
+  ractors << Ractor.new do
+    num = receive
+    fibo(num)
+  end
+end
 
-    2.times { |i| ractors[i].send($n + i) }
+2.times { |i| ractors[i].send($n + i) }
 
-    ractors.each do |ractor|
-      fibos << ractor.take
-    end
+ractors.each do |ractor|
+  fibos << ractor.take
+end
 
-    p fibos.sum
-    => 433494437
+p fibos.sum
+=> 433494437
 ```
 Time taken:
 
@@ -270,53 +260,3 @@ communicate.
 Processes are not the only mechanisms that enable paralellism and concurrency
 in ruby. Another popular concurrency mechanism are Threads. Ruby also provides a
 Fiber mechanism for concurrency.
-
-----
-
-What happens when the child processes write to the pipe at the same time?
-If two child processes can not write to the pipe at the same time, how is that
-implemented?
-
-What happens when multiple processes are sharing a single pipe?
-=> a pipe is generated and the parent process is the reader. Both of the child
-processes need to write to the pipe. How will this play out?
-
-
-Working with Processess is easy:
-- You spawn processes using fork
-- You wait for processes to complete using Process.wait
-- Process.wait is blocking i.e your script waits until the child process
-completes it work before moving on
-- This removes the advantages of forking because the script is not concurrent
-  now.
-- To fix this we use UNIX signals. We trap a signal (:CHINT) so that our
-  parent process is notified when one of the children has finished and exited.
-- When we need to communicate between processes we can use Unix pipes. Pipes
-  are unidirectional which means if one process becomes the sender the other
-  has to become the receiver.
-- To communicate bidirectionally use UNIX Sockets.
-
-Data is not corrupted when using Processes because processes copy over any
-global data when it gets modified.
-
-Use pipes or UNIX sockets.
-
-In a multicore cpu, in viable conditions, the processes are parallelized by
-the OS.
-
-# all times
-433494437
-***************************
-Time taken without processes or ractors: 
- 25.733370   0.000000  25.733370 ( 25.735631)
-***************************
-433494437
-***************************
-Time taken with processes: 
-  0.000000   0.003370  26.134027 ( 16.082322)
-***************************
-process.rb:67: warning: Ractor is experimental, and the behavior may change in future versions of Ruby! Also there are many implementation issues.
-433494437
-***************************
-Time taken with ractors: 
- 26.018751   0.000522  26.019273 ( 16.038329)

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <link rel="stylesheet" href="https://unpkg.com/mvp.css"> 
+  <style>
+.container {
+  width: 760px;
+  margin: 0 auto;
+  padding: 5px;
+}
+
+body {
+  background: #F6F6EF;
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="use-processes-to-speed-up-your-program">Use Processes to speed
+up your program</h1>
+<p>Do you like fast things? A fast boat, bike, car. How about a fast
+script?</p>
+<p>How do we make our ruby code run faster?</p>
+<p>One method is to parallelize parts of the script. We can have several
+things within the script execute at the same time instead of
+sequentially. We can use Processes to achieve this.</p>
+<p>Let's take a problem of calculating fibonacci sequences for n and n +
+1 (where n is 40). Our code is:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode ruby"><code class="sourceCode ruby"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="va">$n</span> <span class="kw">=</span> <span class="dv">40</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="cf">def</span> fibo(n)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> n <span class="kw">&lt;</span> <span class="dv">2</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    fibo(n<span class="dv">-2</span>) <span class="kw">+</span> fibo(n<span class="dv">-1</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">end</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>fibos <span class="kw">=</span> <span class="kw">[]</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>fibos <span class="kw">&lt;&lt;</span> fibo(<span class="va">$n</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>fibos <span class="kw">&lt;&lt;</span> fibo(<span class="va">$n</span> <span class="kw">+</span> <span class="dv">1</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">p</span> fibos<span class="at">.sum</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">p</span> n_result <span class="kw">+</span> n_plus_one_result</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="kw">=&gt;</span> <span class="dv">433494437</span></span></code></pre></div>
+<p>We are calculating fibonacci number at 40 and 41 place. Inserting the
+values into the <code>fibos</code> array. Then calculating their sum.
+This program takes 25 seconds in my dual core computer to finish.</p>
+<pre><code>  26.611368   0.000000  26.611368 ( 26.614200)</code></pre>
+<p>The above scripts runs this way:</p>
+<ol type="1">
+<li>calculate fibonnaci for 40th place. Push it into the fibos
+array.</li>
+<li>calculate fibonnaci for 41st place. Push it into the fibos
+array.</li>
+<li>Sum the values.</li>
+</ol>
+<p>We can make this faster by executing the 1st and 2nd points above at
+the same time.</p>
+<p>So we need to rewrite our script to:</p>
+<ol type="1">
+<li>Calculate fibonnaci for 40th place and 41st place. Push each value
+into the fibos array.</li>
+<li>Sum the results</li>
+</ol>
+<p>Translated to code this is:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode ruby"><code class="sourceCode ruby"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fibos <span class="kw">=</span> <span class="kw">[]</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">fork</span> <span class="kw">{</span> fibos <span class="kw">&lt;&lt;</span> fibo(<span class="va">$n</span>) <span class="kw">}</span> <span class="co"># process(1)</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">fork</span> <span class="kw">{</span> fibos <span class="kw">&lt;&lt;</span> fibo(<span class="va">$n</span> <span class="kw">+</span> <span class="dv">1</span>) <span class="kw">}</span> <span class="co"># process(2)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span><span class="at">.times</span> <span class="cf">do</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Process</span><span class="at">.wait</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="fu">puts</span> fibos<span class="at">.sum</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="kw">=&gt;</span> <span class="dv">0</span></span></code></pre></div>
+<p>There are a two new things in the above script. They are:</p>
+<ol type="1">
+<li>fork</li>
+<li>Process.wait</li>
+</ol>
+<p>fork() creates a new (child)process. Process.wait() waits for the
+child process to exit. We call <code>Process.wait</code> two times
+because we have two processes that we need to wait on.</p>
+<p>This script contains three processes. Process(0) is the parent
+process which <code>forks</code> two times. Each fork creates a new
+process. Thus, we have one parent process and two child processes.</p>
+<p>Inside each child process we calculate the fibo for n and n + 1
+respectively then push it into the fibos array. We then sum the
+values.</p>
+<p>This script takes 18s to execute, so we have already reduced our
+total time.</p>
+<pre><code>  0.000000   0.003849  31.207346 ( 18.875722)</code></pre>
+<p>However our final result is 0. Why?</p>
+<p>Let me remind you first that we are in a parallel world here and in a
+parallel world weird things can happen when different processes are
+writing to a variable simultaneously.</p>
+<p>This becomes a critical point to keep in mind when looking at these
+lines of code:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode ruby"><code class="sourceCode ruby"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>fibos <span class="kw">&lt;&lt;</span> fibo(<span class="va">$n</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>fibos <span class="kw">&lt;&lt;</span> fibo(<span class="va">$n</span> <span class="kw">+</span> <span class="dv">1</span>)</span></code></pre></div>
+<p>What is the final value of fibos when <code>fibo($n)</code> and
+<code>fibo($n + 1)</code> finish calculating at the same time?</p>
+<p>When that happens fibos final value can either be
+<code>result 1</code> or <code>result 2</code>.</p>
+<p>This scenario is completely possible. Think about it,
+<code>fibo($n)</code> finishes calculating <span>(fibos value is
+[])</span>, simultaneously <code>fibo($n + 1)</code> finishes
+calculating <span>(fibos value is [])</span>. Both push.</p>
+<p>This is an ugly situation and if this was the way processes actually
+worked we could have four different outcomes for fibos:</p>
+<ol type="1">
+<li>[<code>result 1</code>, <code>result 2</code>] <span>When process(1)
+completes before process(2)</span></li>
+<li>[<code>result 2</code>, <code>result 1</code>] <span>When process(2)
+completes before process(1)</span></li>
+<li>[<code>result 1</code>] <span>When both complete at same time, and
+process(1) pushes last to fibos</span></li>
+<li>[<code>result 2</code>] <span>When both complete at same time, and
+process(2) pushes last to fibos</span></li>
+</ol>
+<p>But instead of this we have a fibos value of [] (an empty array)
+because in reality none of the above scenarios come into play when using
+processes.</p>
+<p>However I hope you appreciate the problems that arise when you want
+to share variables between parallel programs because when using other
+methods (like Threads) to parallelize the above scenarios do come into
+play.</p>
+<p>You see processes side step the complexities that arise when writing
+to shared variables by making a separate copy of variables which are
+localized inside that process.</p>
+<p>This means, in our program, the original fibos array (value []) is
+duplicated twice. Once per each new process.</p>
+<p>When each of the three processes are reading/writing to fibos they
+are accessing their own local copy. This copy is not accessible by other
+processes which is why when process(1) and process(2) write to fibos
+they are writing to their localized copies.</p>
+<p>The original fibos array (in process(0)) is unchanged (value [])
+which is why when we sum we get 0.</p>
+<p>To summarize, our program has been parallelized. Each process is
+calculating the correct values. However we need a way to communicate the
+results between processes so that we can sum it.</p>
+<p>How do we do that?</p>
+<h2 id="passing-messages-between-process">Passing Messages Between
+Process</h2>
+<p>Pipes are a unidirectional communication channel that we can leverage
+to pass messages between processes. Unidirectional means that messages
+can be passed only in one direction. So, only the sender can send
+messages and the receiver can only receive them.</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode ruby"><code class="sourceCode ruby"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>fibos <span class="kw">=</span> <span class="kw">[]</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>rd, wr <span class="kw">=</span> <span class="cn">IO</span><span class="at">.pipe</span> <span class="co"># instantiate a pipe</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">[</span><span class="va">$n</span>, <span class="va">$n</span> <span class="kw">+</span> <span class="dv">1</span><span class="kw">]</span><span class="at">.each</span> <span class="cf">do</span> <span class="kw">|</span>i<span class="kw">|</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fork</span> <span class="cf">do</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    rd<span class="at">.close</span> <span class="co"># writer needs to close it&#39;s reader.</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    result <span class="kw">=</span> fibo(i)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    wr<span class="at">.puts</span> result</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    wr<span class="at">.close</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">end</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>wr<span class="at">.close</span> <span class="co"># reader needs to close it&#39;s writer.</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span><span class="at">.times</span> <span class="cf">do</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Process</span><span class="at">.wait</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>rd<span class="at">.read.split</span>(<span class="st">&quot;\n&quot;</span>)<span class="at">.each</span> <span class="cf">do</span> <span class="kw">|</span>res<span class="kw">|</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  fibos <span class="kw">&lt;&lt;</span> res<span class="at">.to_i</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="fu">p</span> result</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="kw">=&gt;</span> <span class="dv">433494437</span></span></code></pre></div>
+<p>Time taken:</p>
+<pre><code>  0.004092   0.000018  30.967578 ( 18.545776)</code></pre>
+<p>We create a pipe and the parent process gets the reader end while we
+hand the writer ends to the child processes. The child processes
+calculate the result and then send it over the pipe to the parent.
+Finally we calculate the sum in the parent process.</p>
+<p>Another way to communicate between processes is to use UNIX
+sockets.</p>
+<p>Our program is done. We have managed to reduce the time taken by 8s
+and we display the correct result.</p>
+<p>However using pipes or UNIX sockets to communicate introduces a level
+of misdirection which can be avoided by using <a
+href="https://ruby-doc.org/3.2.2/Ractor.html">Ractors</a>.</p>
+<p>Each ractor has it's own environment and any shareable data between
+ractors are protected using a locking mechanism. For our program,
+ractors enable picking out their data easily by the main Ractor (the
+parent process). This is the code when using ractors:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode ruby"><code class="sourceCode ruby"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>fibos <span class="kw">=</span> <span class="kw">[]</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>ractors <span class="kw">=</span> <span class="kw">[]</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span><span class="at">.times</span> <span class="cf">do</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  ractors <span class="kw">&lt;&lt;</span> <span class="dt">Ractor</span><span class="at">.new</span> <span class="cf">do</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    num <span class="kw">=</span> receive</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    fibo(num)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">end</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span><span class="at">.times</span> <span class="kw">{</span> <span class="kw">|</span>i<span class="kw">|</span> ractors<span class="kw">[</span>i<span class="kw">]</span><span class="at">.send</span>(<span class="va">$n</span> <span class="kw">+</span> i) <span class="kw">}</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>ractors<span class="at">.each</span> <span class="cf">do</span> <span class="kw">|</span>ractor<span class="kw">|</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  fibos <span class="kw">&lt;&lt;</span> ractor<span class="at">.take</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="fu">p</span> fibos<span class="at">.sum</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="kw">=&gt;</span> <span class="dv">433494437</span></span></code></pre></div>
+<p>Time taken:</p>
+<pre><code>  31.273351   0.000000  31.273351 ( 18.823030)</code></pre>
+<p>Couple of new things in the above code.</p>
+<ol type="1">
+<li>Ractor.new</li>
+<li>ractors.send</li>
+<li>receive</li>
+<li>ractor.take</li>
+</ol>
+<p><code>Ractor.new</code> which creates a new ractor. Like processes
+each ractor has it's own local context and can only access variables
+defined within it. So any variables defined within the ractor block is
+only accessible by that ractor.</p>
+<p><code>ractors.send</code> is used to exchange messages between
+ractors. Above we are sending values 40 and 41 to the child ractors.</p>
+<p><code>receive</code> is used to receive values inside ractors. Our
+child ractors receive values 40 and 41 respectively.</p>
+<p><code>ractor.take</code> is like <code>Process.wait</code>. It waits
+for the ractor to complete and it's return value is the final return
+value of the ractor. In our case the result of fibo(40) and
+fibo(41).</p>
+<p>As you can see with ractors we do not have to use pipes or sockets to
+communicate.</p>
+<p>Processes are not the only mechanisms that enable paralellism and
+concurrency in ruby. Another popular concurrency mechanism are Threads.
+Ruby also provides a Fiber mechanism for concurrency.</p>
+  </div>
+</body>
+</html>
