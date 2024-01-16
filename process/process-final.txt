@@ -1,4 +1,4 @@
-# Use Processes to speed up your program
+# Use Processes to speed up your [ruby](https://ruby-doc.org/) program
 
 Do you like fast things? A fast boat, bike, car? How about a fast script?
 
