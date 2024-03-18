@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>A console trick</title>
+  <meta name="description" content="Ruby and Rails stuff">
+  <link rel="stylesheet" href="https://unpkg.com/mvp.css"> 
+  <link rel="icon" href="../icons/favicon.ico" type="image/x-icon">
+  <style>
+.container {
+  width: 760px;
+  margin: 0 auto;
+  padding: 5px;
+}
+
+body {
+  background: #F6F6EF;
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="a-console-trick">A Console Trick</h1>
+<p>It is the best of friends. It is the worst of friends. It makes it
+easier to code but it encourages repititiveness. It is the Rails
+Console. I love it. It is the first thing that I fire up in another tmux
+pane after I open a Rails project. The only thing that frustrates me is
+I find myself repititively typing a few commands or reaching for the
+same few objects again and again, and having to type alot to get these
+things is just not what a self respecting lazy programmer does.</p>
+<p>For example, I find myself querying for companies by name again and
+again:</p>
+<pre><code># rails console
+
+Company.find_by_name &quot;Some cool name&quot;</code></pre>
+<p>Reverse command search helps mitigate typing these types of commands
+repititively but I've found debug's search to be buggy. So, I tend to
+put these commands as methods and load them into the console at start
+up.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode ruby"><code class="sourceCode ruby"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># console_essentials.rb</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="cf">class</span> <span class="dt">Object</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">def</span> find_company(name)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Company</span><span class="at">.find_by</span>(<span class="wa">name: </span>name)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">end</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">alias</span> <span class="wa">:fc</span> <span class="wa">:find_company</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span></code></pre></div>
+<p>As you can see, I also alias the command to a (most of the time)
+two-letter method. Now, I can search for a company simply as:</p>
+<pre><code># rails console
+
+fc &quot;Some cool name&quot;</code></pre>
+<p>Another thing I've found useful when working in the console is to
+have a few variables setup on start up. These variables contain things
+which I frequently need like</p>
+<ul>
+<li>a normal user,</li>
+<li>an admin user,</li>
+<li>the company with the biggest user base etc</li>
+</ul>
+<p>When these are available to me at startup I don't need to query for
+them to use them. I can simply fire up the console and do:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode ruby"><code class="sourceCode ruby"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># rails console</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>user<span class="at">.awesome_method</span></span></code></pre></div>
+<p>and make awesome things happen.</p>
+<p>You can't load local variables from one file to another in ruby
+though but you can set global variables. So, what I do is define a class
+with an initialize method where I set the variables that I want and then
+assign an instance of that class to a global variable.</p>
+<pre><code># console_essentials.rb
+
+class ProjectEssentials
+  attr_reader :company, :admin, :microsoft
+  def initialize
+    @company = Company.find_by_name &quot;Some cool company&quot;
+    @microsoft = Company.find_by_name &quot;Microsoft&quot;
+    @admin = @company.admin
+    @recipients = @company.recipients
+    p admin.email
+  end
+
+  def update_admin_password(company)
+    company.admin.update_attribute :password, &#39;wasssup&#39;
+    p company.admin
+  end
+  alias :uap :update_admin_password
+end
+
+$p = ProjectEssentials.new</code></pre>
+<p>With this, I can access the company and the uap method using:</p>
+<pre><code># rails console
+
+$p.company
+$p.uap
+$p.admin.awesome_method</code></pre>
+<p>Finally, the way I load these into my rails console on startup is I
+create a file <code>config/initializers/irb.rb</code> that looks like
+this:</p>
+<pre><code># config/initializers/irb.rb
+
+module IRBExtention
+  def start
+    load(Rails.root.to_s + &#39;/console_essentials.rb&#39;)
+    super
+  end
+end
+
+module Rails
+  class Console
+    prepend IRBExtention
+  end
+end</code></pre>
+<p>That's it!</p>
+<p>I have a whole bunch of methods with short names in my
+<code>console_essentials.rb</code>. I also define ephemeral classes in
+it when I am debugging something.</p>
+<p>For example:</p>
+<pre><code>class DebuggingUnassigned
+  attr_reader :prob_recis, :reci, :company
+
+  def initialize
+    @prob_recis = Recipient.find([906016462, 906016463])
+    @reci = prob_recis.first
+    @company = reci.company
+  end
+end
+
+$d = DebuggingUnassigned.new</code></pre>
+<p>This helps because I don't have to do a bunch of querying again to
+get where I was yesterday. Because yesterday, I shut the laptop angrily,
+and left the office, hiding my tears, agonized by my inability to fix
+simple bugs, questioning my whole life, education (not that I have one)
+and career.</p>
+<p>I might be incompetent but atleast I can do this the next day (and
+now, you can too!):</p>
+<pre><code># rails console
+
+$d.prob_recis</code></pre>
+<p>I hope this article has been of help. Happy consoling!</p>
+  </div>
+</body>
+</html>

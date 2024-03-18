@@ -1,0 +1,155 @@
+# A Console Trick
+
+It is the best of friends. It is the worst of friends. It makes it easier
+to code but it encourages repititiveness. It is the Rails Console.
+I love it. It is the first thing that I fire up in another tmux pane after I
+open a Rails project. The only thing that frustrates me is I find myself
+repititively typing a few commands or reaching for the same few objects again
+and again, and having to type alot to get these things is just not what a self
+respecting lazy programmer does.
+
+For example, I find myself querying for companies by name again and again:
+
+```
+# rails console
+
+Company.find_by_name "Some cool name"
+```
+
+Reverse command search helps mitigate typing these types of commands
+repititively but I've found debug's search to be buggy. So, I tend to put
+these commands as methods and load them into the console at start up.
+
+```ruby
+# console_essentials.rb
+
+class Object
+  def find_company(name)
+    Company.find_by(name: name)
+  end
+  alias :fc :find_company
+end
+```
+
+As you can see, I also alias the command to a (most of the time) two-letter method. Now,
+I can search for a company simply as:
+
+```
+# rails console
+
+fc "Some cool name"
+```
+
+Another thing I've found useful when working in the console is to have a few
+variables setup on start up. These variables contain things which I frequently
+need like
+- a normal user, 
+- an admin user, 
+- the company with the biggest user base etc
+
+When these are available to me at startup I don't need to query for them to
+use them. I can simply fire up the console and do:
+
+```ruby
+# rails console
+
+user.awesome_method
+```
+
+and make awesome things happen.
+
+You can't load local variables from one file to another in ruby though but you can
+set global variables. So, what I do is define a class with an initialize
+method where I set the variables that I want and then assign an instance of
+that class to a global variable.
+
+```
+# console_essentials.rb
+
+class ProjectEssentials
+  attr_reader :company, :admin, :microsoft
+  def initialize
+    @company = Company.find_by_name "Some cool company"
+    @microsoft = Company.find_by_name "Microsoft"
+    @admin = @company.admin
+    @recipients = @company.recipients
+    p admin.email
+  end
+
+  def update_admin_password(company)
+    company.admin.update_attribute :password, 'wasssup'
+    p company.admin
+  end
+  alias :uap :update_admin_password
+end
+
+$p = ProjectEssentials.new
+```
+
+With this, I can access the company and the uap method using:
+
+```
+# rails console
+
+$p.company
+$p.uap
+$p.admin.awesome_method
+```
+
+Finally, the way I load these into my rails console on startup is I create a
+file `config/initializers/irb.rb` that looks like this:
+
+
+```
+# config/initializers/irb.rb
+
+module IRBExtention
+  def start
+    load(Rails.root.to_s + '/console_essentials.rb')
+    super
+  end
+end
+
+module Rails
+  class Console
+    prepend IRBExtention
+  end
+end
+```
+
+That's it!
+
+I have a whole bunch of methods with short names in my
+`console_essentials.rb`. I also define ephemeral classes in it when I am
+debugging something. 
+
+For example:
+
+```
+class DebuggingUnassigned
+  attr_reader :prob_recis, :reci, :company
+
+  def initialize
+    @prob_recis = Recipient.find([906016462, 906016463])
+    @reci = prob_recis.first
+    @company = reci.company
+  end
+end
+
+$d = DebuggingUnassigned.new
+```
+
+This helps because I don't have to do a bunch of querying
+again to get where I was yesterday. Because yesterday, I shut the laptop
+angrily, and left the office, hiding my tears, agonized by my inability to fix simple bugs, 
+questioning my whole life, education (not that I have one) and career.
+
+I might be incompetent but atleast I can do this the next day (and now, you can too!):
+
+```
+# rails console
+
+$d.prob_recis
+```
+
+I hope this article has been of help. Happy consoling!
