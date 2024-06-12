@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Compress Images before saving in Rails</title>
+  <meta name="description" content="Ruby and Rails stuff">
+  <link rel="stylesheet" href="https://unpkg.com/mvp.css"> 
+  <link rel="icon" href="../icons/favicon.ico" type="image/x-icon">
+  <style>
+.container {
+  width: 760px;
+  margin: 0 auto;
+  padding: 5px;
+}
+
+body {
+  background: #F6F6EF;
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="how-to-compress-images-before-saving-in-ruby-on-rails">How to
+compress images before saving in Ruby on Rails</h1>
+<p>When attaching images to records you can compress them before
+attaching.</p>
+<pre><code># users controller
+
+compressed_image = ImageProcessing::MiniMagick.strip.quality(85)
+                                              .interlace(&#39;Plane&#39;)
+                                              .gaussian_blur(&#39;0.05&#39;)
+                                              .call(params[:photo])
+
+@user.attach(io: compressed_image, filename: params[:photo].original_filename, 
+             content_type: &#39;image/jpeg&#39;)
+
+@user.save</code></pre>
+<p>The compression strategy used here is described in this <a
+href="https://dev.to/feldroy/til-strategies-for-compressing-jpg-files-with-imagemagick-5fn9">article</a></p>
+<p>Using this strategy I was able to compress a 3MB image to 1.5MB.</p>
+  </div>
+</body>
+</html>
