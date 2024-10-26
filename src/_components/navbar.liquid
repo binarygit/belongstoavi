@@ -1,0 +1,25 @@
+{% comment %} <header> {% endcomment %}
+  {% comment %}   <img src="{{ '/images/logo.svg' | relative_url }}" alt="Logo" /> {% endcomment %}
+  {% comment %} </header> {% endcomment %}
+
+{% comment %} <nav> {% endcomment %}
+  {% comment %}   <ul> {% endcomment %}
+    {% comment %}     <li><a href="{{ '/' | relative_url }}">Home</a></li> {% endcomment %}
+    {% comment %}     <li><a href="{{ '/about' | relative_url }}">About</a></li> {% endcomment %}
+    {% comment %}     <li><a href="{{ '/posts' | relative_url }}">Posts</a></li> {% endcomment %}
+    {% comment %}   </ul> {% endcomment %}
+  {% comment %} </nav> {% endcomment %}
+
+<nav class="navbar">
+  <a class="site-title" href="{{ '/' | relative_url }}">BelongsToAvi</a>
+  <ul class="pull-right">
+    <li class="pull-left">
+      <a href="{{ '/about' | relative_url }}">About</a>
+      /
+    </li>
+    <li class="pull-left">
+      <a href="https://binarygit.github.io/my-resume/">Resume</a>
+    </li>
+  </ul>
+  <hr>
+</nav>

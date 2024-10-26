@@ -1,0 +1,32 @@
+{% comment %} <header> {% endcomment %}
+  {% comment %}   <img src="{{ '/images/logo.svg' | relative_url }}" alt="Logo" /> {% endcomment %}
+  {% comment %} </header> {% endcomment %}
+
+{% comment %} <nav> {% endcomment %}
+  {% comment %}   <ul> {% endcomment %}
+    {% comment %}     <li><a href="{{ '/' | relative_url }}">Home</a></li> {% endcomment %}
+    {% comment %}     <li><a href="{{ '/about' | relative_url }}">About</a></li> {% endcomment %}
+    {% comment %}     <li><a href="{{ '/posts' | relative_url }}">Posts</a></li> {% endcomment %}
+    {% comment %}   </ul> {% endcomment %}
+  {% comment %} </nav> {% endcomment %}
+
+<div class="post-card">
+  <a class="title" href="{{ url }}">
+    {{ title }}
+  </a>
+
+  <div class="details">
+    <b>{{ date | date: "%d %B %Y"  }}</b>
+    <br>
+
+    <b>[</b>
+    <a href="/parchment/tags/#math">math</a>,
+    <a href="/parchment/tags/#tech">tech</a>
+    <b>]</b>
+  </div>
+
+  <div class="subtitle">
+    {{ subtitle }}
+  </div>
+</div>
+<hr>
