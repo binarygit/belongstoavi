@@ -93,9 +93,6 @@ code.highlighter-rouge {
   margin-bottom:1em;
   padding: 0.5em;
 }
-.footer a {
-  color:black
-}
 @media (max-width: 800px) {
   .container {
     max-width:600px;
