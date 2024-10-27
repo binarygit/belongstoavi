@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  Time and Rails
+title:  Time and Ruby on Rails
 subtitle: It is already tomorrow in Australia.
 date:   2024-10-26 18:34:09 +0545
 categories: updates
@@ -8,18 +8,24 @@ categories: updates
 
 > “Don’t worry about the world coming to an end today. It is already tomorrow in Australia.” -Charles M. Schulz
 
-If we as website developers had any substantial power, we would've blown up the world a long long time ago.
-Thank God we only hold absolute power over our apps and so are limited to destroying that. 
-The earth turns indifferent to our freshly minted 500 errors.
+We as website developers hold little power over the real world. It's the only reason the world has not blown up into pieces yet.
+
+If we had absolute powers like we do over our apps, I wouldn't be suprised if I woke up one day and when I opened the door the sky turned a deep orange,
+the dogs started howling in the distance and a fierce wind started beating against me, the door shaking as a flash of light rushed and engulfed me and - boom.
+
+In the aftermath the words <span class="highlight-red">"Internal Server Error"</span> hangs boringly in the atmosphere.
 
 <span class="highlight-red">But what say you?</span>
-I'm better than you?
-Well that maybe, but let me tell you a little about Time then, and how time is valuable to a website dev.
 
-Especially time in Rails. Time is tricky because sometimes you want to use `Time.now`, other times it's `Time.current`
+I'm better than you? More cautious? More professional? More talented? More intelligent?
+
+Well that maybe, but let me tell you a little about Time, especially Time in Rails and how you can use it and make it work for you.
+
+Time is tricky because sometimes you want to use `Time.now`, other times it's `Time.current`
 and at times you even see `Time.new`.
 
-Let's get that out of the way.
+Let's get these out of the way.
+<img style="float: right" src="/images/allegory_of_vanity.jpeg" alt="">
 
 ## What is the difference between Time.(new, now, and current)?
 `Time.new` let's you create a new time object. You'll need to pass in a bunch of parameters 
@@ -27,16 +33,17 @@ and keep track of which param maps to what. Was the first param a year? or was i
 
 Don't worry I'll show you an easier way to create one at the end of the article.
 
-Time.now returns the system time and Time.current doesn't. Did I lose you there smarty pants?
-Well let the stupid trouser guy explain it to you.
+Time.now always returns the system time. Time.current returns the current application time.
+
 System time is the time kept by your physical computer. Let's say you open up the rails console in your
 home computer in Kathmandu and type in `Time.now`. You'll get the current time in Kathmandu.
 Now ssh to a server in America and type in `Time.now`, it'll give you the current time there.
-Both of these are `Time` objects
+Both of these are `Time` objects.
 
 Time.current returns a `ActiveSupport::TimeZone` object, and the time it's returns is TimeZone aware i.e it returns the current time
 specific to a timezone. Which timezone, you ask?
-Well the timezone that you've set your application to via `Time.zone=`.
+
+Well the timezone that you've set your application to via `Time.zone=` or `config.time_zone`
 
 ```ruby
 Time.zone
@@ -55,10 +62,9 @@ To change it:
 ```ruby
 Time.zone = "Darwin"
 => 
-#<ActiveSupport::TimeZone:0x00007f08c34a72e8
- @name="Kathmandu",
- @tzinfo=#<TZInfo::DataTimezone: Asia/Kathmandu>,
- @utc_offset=nil>
+#<ActiveSupport::TimeZone:0x00007f11675d24e0 @name="Darwin", 
+  @tzinfo=#<TZInfo::DataTimezone: Australia/Darwin>, 
+  @utc_offset=nil>
 
 Time.current
 => Sat, 26 Oct 2024 21:58:58.035129061 ACST +09:30
@@ -70,16 +76,12 @@ Time.current.
 If you just want the date, you use `Date.current`
 
 If you want to know yesterday's date, or tomorrow's use: `Time.current.yesterday; Time.current.tomorrow`
+
 You can even check whether today is a weekday or a weekend: `Time.current.on_weekday?; Time.current.on_weekend?`
 
 The above methods are also available on Time objects. However if you're wondering are there any other helpul method's like the above
-for `` objects, then you're in the right place. I picked out a few that I found interesting and useful and in the process I also discovered an easier
+for `ActiveSupport::TimeZone` objects, then you're in the right place. I picked out a few that I found interesting and useful and in the process I also discovered an easier
 way to construct Time objects without melting my brain. Enjoy!
-
-
-I could never understand the difference between Ruby Time and Rails Time until I decided to sit down and read
-this great [article](https://danilenko.org/2012/7/6/rails_timezones/). It's very understandable and simple.
-Go check it out.
 
 ## Get timezone of a country
 `ActiveSupport::TimeZone.country_zones(<country_code>)`
@@ -136,7 +138,7 @@ ActiveSupport::TimeZone.us_zones
 
 # Convert time to another zone
 ```ruby
-`Time.current.in_time_zone("Sydney")`
+Time.current.in_time_zone("Sydney")
 => Sat, 26 Oct 2024 15:35:41.661123338 +0545 +05:45
 ```
 
