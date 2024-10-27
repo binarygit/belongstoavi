@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  Time in Ruby on Rails
+title: Time in Ruby on Rails
 subtitle: It is already tomorrow in Australia.
-date:   2024-10-26 18:34:09 +0545
+og_image: images/allegory_of_vanity.jpeg
 categories: updates
 ---
 
