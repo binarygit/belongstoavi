@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  Time and Ruby on Rails
+title:  Time in Ruby on Rails
 subtitle: It is already tomorrow in Australia.
 date:   2024-10-26 18:34:09 +0545
 categories: updates

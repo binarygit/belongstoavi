@@ -37,6 +37,32 @@ namespace :frontend do
   end
 end
 
+task :create_post do
+  title = ENV["TITLE"]
+
+  current_time = Time.now.strftime("%F")
+
+  formatted_title = title.downcase.tr(" ", "-")
+
+  extension = ".md"
+
+  filename = current_time + "-" + formatted_title + extension
+
+  base_url = "src/_posts/"
+
+  path = base_url + filename
+
+  File.open(path, "w+") do |file|
+    file.puts "---"
+    file.puts "layout: post"
+    file.puts "title: #{title}"
+    file.puts "categories: updates"
+    file.puts "---"
+  end
+
+  puts "Successfully created #{title} at #{path} 🎉"
+end
+
 #
 # Add your own Rake tasks here! You can use `environment` as a prerequisite
 # in order to write automations or other commands requiring a loaded site.
