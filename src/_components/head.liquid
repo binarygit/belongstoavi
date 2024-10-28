@@ -5,7 +5,7 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{  data.title }} | BelongsToAvi">
 <meta property="og:description" content="Learn about Time in Rails. Which methods to use and their differences.">
-<meta property="og:image" content="{{ '/images/allegory_of_vanity.jpeg', relative_url }}">
+<meta property="og:image" content="{{ '/images/allegory_of_vanity.jpeg' | relative_url }}">
 
 {% capture resource_title %}{{ data.title | strip_html | strip_newlines }}{% endcapture %}
 <title>{% if resource_title != "Index" %}{{ resource_title | escape }} | {{ metadata.title | escape }}{% else %}{{ metadata.title | escape }}: {{ metadata.tagline | escape }}{% endif %}</title>
