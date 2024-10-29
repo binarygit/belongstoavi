@@ -50,7 +50,7 @@ Time.zone
 => 
 #<ActiveSupport::TimeZone:0x00007f08c34a72e8
  @name="Kathmandu",
- @tzinfo=#<TZInfo::DataTimezone: Asia/Kathmandu>,
+ @TZINFO=#<TZInfo::DataTimezone: Asia/Kathmandu>,
  @utc_offset=nil>
 
 Time.current
@@ -136,7 +136,7 @@ ActiveSupport::TimeZone.us_zones
  ]
 ```
 
-# Convert time to another zone
+## Convert time to another zone
 ```ruby
 Time.current.in_time_zone("Sydney")
 => Sat, 26 Oct 2024 15:35:41.661123338 +0545 +05:45
@@ -154,7 +154,7 @@ Time.zone.formatted_offset(false)
 => "+0545"
 ```
 
-# Creating Time/TimeWithZone objects
+## Creating Time/TimeWithZone objects
 There is a hard way and an easy way to do things. I know I'm not a masochist because I had been creating Time objects
 for a long long time and found no pleasure in it until I found the easy way and ditched suffering completely.
 
@@ -175,5 +175,26 @@ Time.parse("Feb 6 1999, 2:30am")
 Time.zone.parse("Feb 6 1999, 2:30am")
 => Sat, 06 Feb 1999 02:30:00.000000000 +0545 +05:45
 ```
+
+## Using a different zone temporarily
+There might be times when you want to set a new Timezone temporarily. You can do this:
+```ruby
+t = Time.zone
+Time.zone = <new zone>
+# code for new timezone
+Time.zone = t
+```
+
+That will work but it'll get flagged in review (if you're lucky/unlucky to get reviews) because there is a better way.
+
+```ruby
+Time.use_zone(<new zone>) do
+# code for new timezone
+end
+```
+
+Within the block the timezone changes to the new zone. After you exit the block the timezone is set back to the original zone.
+
+However, use_zone if you noticed doesn't come from the TimeZone class, it is defined in the [Time class](https://api.rubyonrails.org/classes/Time.html#method-c-use_zone).
 
 If you want to know more about Time in Rails in detail. Check out [this article](https://danilenko.org/2012/7/6/rails_timezones/). It's does a great job explaining all this stuff.
