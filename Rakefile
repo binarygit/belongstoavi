@@ -63,6 +63,42 @@ task :create_post do
   puts "Successfully created #{title} at #{path} 🎉"
 end
 
+task :create_srn_post do
+  posts = Dir.entries("src/_posts")
+  last_srn_post = posts.select {|post| post.match? /newsletter/ }.sort.last
+  last_srn_post_number = last_srn_post.match(/newsletter-(.+).md/).to_a.last
+
+  title = "what-i-learned-from-short-ruby-newsletter-#{last_srn_post_number.to_i + 1}"
+  post_title =  "what-i-learned-from-short-ruby-newsletter (##{last_srn_post_number.to_i + 1})"
+  create_post_file(file_path(title), post_title)
+
+  puts "Successfully created #{title} 🎉"
+end
+
+def file_path(title)
+  current_time = Time.now.strftime("%F")
+
+  formatted_title = title.downcase.tr(" ", "-")
+
+  extension = ".md"
+
+  filename = current_time + "-" + formatted_title + extension
+
+  base_url = "src/_posts/"
+
+  path = base_url + filename
+end
+
+def create_post_file(path, title)
+  File.open(path, "w+") do |file|
+    file.puts "---"
+    file.puts "layout: post"
+    file.puts "title: #{title}"
+    file.puts "categories: updates"
+    file.puts "---"
+  end
+end
+
 #
 # Add your own Rake tasks here! You can use `environment` as a prerequisite
 # in order to write automations or other commands requiring a loaded site.
