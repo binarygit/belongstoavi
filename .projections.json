@@ -1,0 +1,14 @@
+{
+  "src/_components/*.liquid": {
+    "type": "component"
+  },
+  "src/_posts/*.md": {
+    "type": "post"
+  },
+  "src/_layouts/*.liquid": {
+    "type": "layout"
+  },
+  "src/_data/*.yml": {
+    "type": "data"
+  }
+}
