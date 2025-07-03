@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Programmer dvorak (ruby) on a mac
+image_name: programmer-dvorak-ruby.png
 categories: updates
 ---
 
