@@ -4,7 +4,10 @@
 <meta property="og:url" content="{{ url | relative_url }}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{  data.title }} | BelongsToAvi">
-<meta property="og:description" content="Learn about Time in Rails. Which methods to use and their differences.">
+
+{% capture og_description %}{{ data.description  | strip_newlines }}{% endcapture %}
+{% assign description = og_description | default: "Some kind of cool description" %}
+<meta property="og:description" content="{{ description }}">
 
 {% capture og_image %}{{ data.image_name  | strip_newlines }}{% endcapture %}
 {% assign image_name = og_image | default: "allegory_of_vanity.jpeg"| prepend: "/images/" %}

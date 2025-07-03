@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Programmer dvorak (ruby) on a mac
+description: How to create and add a custom keyboard in macos
 image_name: programmer-dvorak-ruby.png
 categories: updates
 ---
