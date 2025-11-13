@@ -62,7 +62,7 @@ IRB::HelperMethod.register(:lreg, LastRegistrationHelper)
 
 ```
 
-We then need to require it in .irbrc, so that the rails console picks it up:
+We then need to require it in `./.irbrc`, so that the rails console picks it up:
 
 ```ruby
 require_relative "path_to_helper_script"
