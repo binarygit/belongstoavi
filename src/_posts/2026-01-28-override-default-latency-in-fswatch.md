@@ -11,6 +11,7 @@ At the end I found out that `fswatch` has a default latency of 1s and so here's 
 `fswatch -l 0.1 # sets a latency for 1ms`
 
 Here's the whole command I'm using:
+
 ```bash
 fswatch -or -l 0.1 app/ | xargs ruby main.rb
 ```
