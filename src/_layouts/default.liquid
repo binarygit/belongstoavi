@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ site.locale }}">
+<html lang="{{ data.local | default: site.locale | default: 'en' }}">
   <head>
     {% render "head", metadata: site.metadata, data: data, url: resource %}
   </head>
